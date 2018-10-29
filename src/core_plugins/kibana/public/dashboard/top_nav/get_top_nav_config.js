@@ -38,18 +38,18 @@ export function getTopNavConfig(dashboardMode, actions, hideWriteControls) {
           ]
           : [
             getFullScreenConfig(actions[TopNavIds.FULL_SCREEN]),
-            getShareConfig(),
+            /*getShareConfig(),
             getCloneConfig(actions[TopNavIds.CLONE]),
-            getEditConfig(actions[TopNavIds.ENTER_EDIT_MODE])
+            getEditConfig(actions[TopNavIds.ENTER_EDIT_MODE])*/
           ]
       );
     case DashboardViewMode.EDIT:
       return [
-        getSaveConfig(actions[TopNavIds.SAVE]),
+        /*getSaveConfig(actions[TopNavIds.SAVE]),
         getViewConfig(actions[TopNavIds.EXIT_EDIT_MODE]),
         getAddConfig(actions[TopNavIds.ADD]),
         getOptionsConfig(),
-        getShareConfig()];
+      getShareConfig()*/];
     default:
       return [];
   }
@@ -61,89 +61,5 @@ function getFullScreenConfig(action) {
     description: 'Full Screen Mode',
     testId: 'dashboardFullScreenMode',
     run: action
-  };
-}
-
-/**
- * @returns {kbnTopNavConfig}
- */
-function getEditConfig(action) {
-  return {
-    key: 'edit',
-    description: 'Switch to edit mode',
-    testId: 'dashboardEditMode',
-    run: action
-  };
-}
-
-/**
- * @returns {kbnTopNavConfig}
- */
-function getSaveConfig(action) {
-  return {
-    key: TopNavIds.SAVE,
-    description: 'Save your dashboard',
-    testId: 'dashboardSaveMenuItem',
-    run: action
-  };
-}
-
-/**
- * @returns {kbnTopNavConfig}
- */
-function getViewConfig(action) {
-  return {
-    key: 'cancel',
-    description: 'Cancel editing and switch to view-only mode',
-    testId: 'dashboardViewOnlyMode',
-    run: action
-  };
-}
-
-/**
- * @returns {kbnTopNavConfig}
- */
-function getCloneConfig(action) {
-  return {
-    key: TopNavIds.CLONE,
-    description: 'Create a copy of your dashboard',
-    testId: 'dashboardClone',
-    run: action
-  };
-}
-
-/**
- * @returns {kbnTopNavConfig}
- */
-function getAddConfig(action) {
-  return {
-    key: TopNavIds.ADD,
-    description: 'Add a panel to the dashboard',
-    testId: 'dashboardAddPanelButton',
-    run: action
-  };
-}
-
-/**
- * @returns {kbnTopNavConfig}
- */
-function getShareConfig() {
-  return {
-    key: TopNavIds.SHARE,
-    description: 'Share Dashboard',
-    testId: 'dashboardShareButton',
-    template: require('plugins/kibana/dashboard/top_nav/share.html')
-  };
-}
-
-/**
- * @returns {kbnTopNavConfig}
- */
-function getOptionsConfig() {
-  return {
-    key: TopNavIds.OPTIONS,
-    description: 'Options',
-    testId: 'dashboardOptionsButton',
-    template: require('plugins/kibana/dashboard/top_nav/options.html')
   };
 }

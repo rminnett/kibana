@@ -20,23 +20,14 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { Synopsis } from './synopsis';
-import { AddData } from './add_data';
 import { RecentlyAccessed, recentlyAccessedShape } from './recently_accessed';
 
 import {
-  EuiButton,
   EuiPage,
-  EuiPanel,
-  EuiTitle,
   EuiSpacer,
-  EuiFlexGroup,
   EuiFlexItem,
-  EuiFlexGrid,
-  EuiText,
   EuiPageBody,
 } from '@elastic/eui';
-
-import { FeatureCatalogueCategory } from 'ui/registry/feature_catalogue';
 
 export class Home extends Component {
 
@@ -100,7 +91,7 @@ export class Home extends Component {
 
 
   render() {
-    const { apmUiEnabled, recentlyAccessed } = this.props;
+    const { recentlyAccessed } = this.props;
 
     let recentlyAccessedPanel;
     if (recentlyAccessed.length > 0) {
@@ -120,59 +111,6 @@ export class Home extends Component {
 
           {recentlyAccessedPanel}
 
-          <AddData
-            apmUiEnabled={apmUiEnabled}
-            isNewKibanaInstance={this.state.isNewKibanaInstance}
-          />
-
-          <EuiSpacer size="l" />
-
-          <EuiFlexGroup>
-            <EuiFlexItem>
-              <EuiPanel paddingSize="l">
-                <EuiTitle>
-                  <h3>
-                    Visualize and Explore Data
-                  </h3>
-                </EuiTitle>
-                <EuiSpacer size="m"/>
-                <EuiFlexGrid columns={2}>
-                  { this.renderDirectories(FeatureCatalogueCategory.DATA) }
-                </EuiFlexGrid>
-              </EuiPanel>
-            </EuiFlexItem>
-            <EuiFlexItem>
-              <EuiPanel paddingSize="l">
-                <EuiTitle>
-                  <h3>
-                    Manage and Administer the Elastic Stack
-                  </h3>
-                </EuiTitle>
-                <EuiSpacer size="m"/>
-                <EuiFlexGrid columns={2}>
-                  { this.renderDirectories(FeatureCatalogueCategory.ADMIN) }
-                </EuiFlexGrid>
-              </EuiPanel>
-            </EuiFlexItem>
-          </EuiFlexGroup>
-
-          <EuiSpacer size="l" />
-
-          <EuiFlexGroup justifyContent="center">
-            <EuiFlexItem grow={false}>
-              <EuiText>
-                <p>
-                  Didn’t find what you were looking for?
-                </p>
-              </EuiText>
-              <EuiSpacer size="s" />
-              <EuiButton
-                href="#/home/feature_directory"
-              >
-                View full directory of Kibana plugins
-              </EuiButton>
-            </EuiFlexItem>
-          </EuiFlexGroup>
         </EuiPageBody>
       </EuiPage>
     );

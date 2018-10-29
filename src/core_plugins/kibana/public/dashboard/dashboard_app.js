@@ -17,37 +17,26 @@
  * under the License.
  */
 
-import _ from 'lodash';
-import angular from 'angular';
 import { uiModules } from 'ui/modules';
 import chrome from 'ui/chrome';
 import { applyTheme } from 'ui/theme';
-import { toastNotifications } from 'ui/notify';
 
 import 'ui/query_bar';
 
 import { panelActionsStore } from './store/panel_actions_store';
 
 import { getDashboardTitle } from './dashboard_strings';
-import { DashboardViewMode } from './dashboard_view_mode';
 import { TopNavIds } from './top_nav/top_nav_ids';
-import { ConfirmationButtonTypes } from 'ui/modals/confirm_modal';
 import { FilterBarQueryFilterProvider } from 'ui/filter_bar/query_filter';
 import { DocTitleProvider } from 'ui/doc_title';
 import { getTopNavConfig } from './top_nav/get_top_nav_config';
-import { DashboardConstants, createDashboardEditUrl } from './dashboard_constants';
-import { VisualizeConstants } from '../visualize/visualize_constants';
+import { DashboardConstants } from './dashboard_constants';
 import { DashboardStateManager } from './dashboard_state_manager';
-import { saveDashboard } from './lib';
-import { showCloneModal } from './top_nav/show_clone_modal';
-import { showSaveModal } from './top_nav/show_save_modal';
-import { showAddPanel } from './top_nav/show_add_panel';
 import { migrateLegacyQuery } from 'ui/utils/migrateLegacyQuery';
 import * as filterActions from 'ui/doc_table/actions/filter';
 import { FilterManagerProvider } from 'ui/filter_manager';
 import { EmbeddableFactoriesRegistryProvider } from 'ui/embeddable/embeddable_factories_registry';
 import { DashboardPanelActionsRegistryProvider } from 'ui/dashboard_panel_actions/dashboard_panel_actions_registry';
-import { VisTypesRegistryProvider } from 'ui/registry/vis_types';
 import { timefilter } from 'ui/timefilter';
 
 import { DashboardViewportProvider } from './viewport/dashboard_viewport_provider';
@@ -69,7 +58,6 @@ app.directive('dashboardApp', function ($injector) {
   const courier = $injector.get('courier');
   const AppState = $injector.get('AppState');
   const kbnUrl = $injector.get('kbnUrl');
-  const confirmModal = $injector.get('confirmModal');
   const config = $injector.get('config');
   const Private = $injector.get('Private');
 
@@ -85,7 +73,6 @@ app.directive('dashboardApp', function ($injector) {
 
       panelActionsStore.initializeFromRegistry(panelActionsRegistry);
 
-      const visTypes = Private(VisTypesRegistryProvider);
       $scope.getEmbeddableFactory = panelType => embeddableFactories.byName[panelType];
 
       const dash = $scope.dash = $route.current.locals.dash;
@@ -96,7 +83,7 @@ app.directive('dashboardApp', function ($injector) {
       const dashboardStateManager = new DashboardStateManager({
         savedDashboard: dash,
         AppState,
-        hideWriteControls: dashboardConfig.getHideWriteControls(),
+        hideWriteControls: true, //dashboardConfig.getHideWriteControls(),
         addFilter: ({ field, value, operator, index }) => {
           filterActions.addFilter(field, value, operator, index, dashboardStateManager.getAppState(), filterManager);
         }
@@ -233,82 +220,6 @@ app.directive('dashboardApp', function ($injector) {
         $scope.dashboardViewMode = newMode;
       }
 
-      const onChangeViewMode = (newMode) => {
-        const isPageRefresh = newMode === dashboardStateManager.getViewMode();
-        const isLeavingEditMode = !isPageRefresh && newMode === DashboardViewMode.VIEW;
-        const willLoseChanges = isLeavingEditMode && dashboardStateManager.getIsDirty(timefilter);
-
-        if (!willLoseChanges) {
-          updateViewMode(newMode);
-          return;
-        }
-
-        function revertChangesAndExitEditMode() {
-          dashboardStateManager.resetState();
-          kbnUrl.change(dash.id ? createDashboardEditUrl(dash.id) : DashboardConstants.CREATE_NEW_DASHBOARD_URL);
-          // This is only necessary for new dashboards, which will default to Edit mode.
-          updateViewMode(DashboardViewMode.VIEW);
-
-          // We need to do a hard reset of the timepicker. appState will not reload like
-          // it does on 'open' because it's been saved to the url and the getAppState.previouslyStored() check on
-          // reload will cause it not to sync.
-          if (dashboardStateManager.getIsTimeSavedWithDashboard()) {
-            dashboardStateManager.syncTimefilterWithDashboard(timefilter, config.get('timepicker:quickRanges'));
-          }
-        }
-
-        confirmModal(
-          `Once you discard your changes, there's no getting them back.`,
-          {
-            onConfirm: revertChangesAndExitEditMode,
-            onCancel: _.noop,
-            confirmButtonText: 'Discard changes',
-            cancelButtonText: 'Continue editing',
-            defaultFocusedButton: ConfirmationButtonTypes.CANCEL,
-            title: 'Discard changes to dashboard?'
-          }
-        );
-      };
-
-      /**
-       * Saves the dashboard.
-       *
-       * @param {object} [saveOptions={}]
-       * @property {boolean} [saveOptions.confirmOverwrite=false] - If true, attempts to create the source so it
-       * can confirm an overwrite if a document with the id already exists.
-       * @property {boolean} [saveOptions.isTitleDuplicateConfirmed=false] - If true, save allowed with duplicate title
-       * @property {func} [saveOptions.onTitleDuplicate] - function called if duplicate title exists.
-       * When not provided, confirm modal will be displayed asking user to confirm or cancel save.
-       * @return {Promise}
-       * @resolved {String} - The id of the doc
-       */
-      function save(saveOptions) {
-        return saveDashboard(angular.toJson, timefilter, dashboardStateManager, saveOptions)
-          .then(function (id) {
-            $scope.kbnTopNav.close('save');
-            if (id) {
-              toastNotifications.addSuccess({
-                title: `Dashboard '${dash.title}' was saved`,
-                'data-test-subj': 'saveDashboardSuccess',
-              });
-
-              if (dash.id !== $routeParams.id) {
-                kbnUrl.change(createDashboardEditUrl(dash.id));
-              } else {
-                docTitle.change(dash.lastSavedTitle);
-                updateViewMode(DashboardViewMode.VIEW);
-              }
-            }
-            return { id };
-          }).catch((error) => {
-            toastNotifications.addDanger({
-              title: `Dashboard '${dash.title}' was not saved. Error: ${error.message}`,
-              'data-test-subj': 'saveDashboardFailure',
-            });
-            return { error };
-          });
-      }
-
       $scope.showFilterBar = () => filterBar.getFilters().length > 0 || !dashboardStateManager.getFullScreenMode();
 
       $scope.showAddPanel = () => {
@@ -320,77 +231,6 @@ app.directive('dashboardApp', function ($injector) {
         $scope.kbnTopNav.click('edit');
       };
       const navActions = {};
-      navActions[TopNavIds.FULL_SCREEN] = () =>
-        dashboardStateManager.setFullScreenMode(true);
-      navActions[TopNavIds.EXIT_EDIT_MODE] = () => onChangeViewMode(DashboardViewMode.VIEW);
-      navActions[TopNavIds.ENTER_EDIT_MODE] = () => onChangeViewMode(DashboardViewMode.EDIT);
-      navActions[TopNavIds.SAVE] = () => {
-        const currentTitle = dashboardStateManager.getTitle();
-        const currentDescription = dashboardStateManager.getDescription();
-        const currentTimeRestore = dashboardStateManager.getTimeRestore();
-        const onSave = ({ newTitle, newDescription, newCopyOnSave, newTimeRestore, isTitleDuplicateConfirmed, onTitleDuplicate }) => {
-          dashboardStateManager.setTitle(newTitle);
-          dashboardStateManager.setDescription(newDescription);
-          dashboardStateManager.savedDashboard.copyOnSave = newCopyOnSave;
-          dashboardStateManager.setTimeRestore(newTimeRestore);
-          const saveOptions = {
-            confirmOverwrite: false,
-            isTitleDuplicateConfirmed,
-            onTitleDuplicate,
-          };
-          return save(saveOptions).then(({ id, error }) => {
-            // If the save wasn't successful, put the original values back.
-            if (!id || error) {
-              dashboardStateManager.setTitle(currentTitle);
-              dashboardStateManager.setDescription(currentDescription);
-              dashboardStateManager.setTimeRestore(currentTimeRestore);
-            }
-            return { id, error };
-          });
-        };
-
-        showSaveModal({
-          onSave,
-          title: currentTitle,
-          description: currentDescription,
-          timeRestore: currentTimeRestore,
-          showCopyOnSave: dash.id ? true : false,
-        });
-      };
-      navActions[TopNavIds.CLONE] = () => {
-        const currentTitle = dashboardStateManager.getTitle();
-        const onClone = (newTitle, isTitleDuplicateConfirmed, onTitleDuplicate) => {
-          dashboardStateManager.savedDashboard.copyOnSave = true;
-          dashboardStateManager.setTitle(newTitle);
-          const saveOptions = {
-            confirmOverwrite: false,
-            isTitleDuplicateConfirmed,
-            onTitleDuplicate,
-          };
-          return save(saveOptions).then(({ id, error }) => {
-            // If the save wasn't successful, put the original title back.
-            if (!id || error) {
-              dashboardStateManager.setTitle(currentTitle);
-            }
-            return { id, error };
-          });
-        };
-
-        showCloneModal(onClone, currentTitle);
-      };
-      navActions[TopNavIds.ADD] = () => {
-        const addNewVis = () => {
-          kbnUrl.change(
-            `${VisualizeConstants.WIZARD_STEP_1_PAGE_PATH}?${DashboardConstants.ADD_VISUALIZATION_TO_DASHBOARD_MODE_PARAM}`);
-          // Function is called outside of angular. Must apply digest cycle to trigger URL update
-          $scope.$apply();
-        };
-
-        const isLabsEnabled = config.get('visualize:enableLabs');
-        const listingLimit = config.get('savedObjects:listingLimit');
-
-        showAddPanel(chrome.getSavedObjectsClient(), dashboardStateManager.addNewPanel, addNewVis, listingLimit, isLabsEnabled, visTypes);
-      };
       updateViewMode(dashboardStateManager.getViewMode());
 
       // update root source when filters update

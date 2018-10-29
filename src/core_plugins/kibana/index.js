@@ -71,7 +71,7 @@ export default function (kibana) {
       },
 
       links: [
-        {
+        /*{
           id: 'kibana:discover',
           title: 'Discover',
           order: -1003,
@@ -85,7 +85,7 @@ export default function (kibana) {
           url: `${kbnBaseUrl}#/visualize`,
           description: 'design data visualizations',
           icon: 'plugins/kibana/assets/visualize.svg',
-        }, {
+        },*/ {
           id: 'kibana:dashboard',
           title: 'Dashboard',
           order: -1001,
@@ -98,7 +98,7 @@ export default function (kibana) {
           subUrlBase: `${kbnBaseUrl}#/dashboard`,
           description: 'compose visualizations for much win',
           icon: 'plugins/kibana/assets/dashboard.svg',
-        }, {
+        }, /*{
           id: 'kibana:dev_tools',
           title: 'Dev Tools',
           order: 9001,
@@ -113,7 +113,7 @@ export default function (kibana) {
           description: 'define index patterns, change config, and more',
           icon: 'plugins/kibana/assets/settings.svg',
           linkToLastSubUrl: false
-        },
+        },*/
       ],
 
       injectDefaultVars(server, options) {
